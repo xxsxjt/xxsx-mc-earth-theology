@@ -1,0 +1,7 @@
+{
+  "pack": {
+    "description": "Earth: Theology resources and data",
+    "min_format": [88, 0],
+    "max_format": [107, 1]
+  }
+}
