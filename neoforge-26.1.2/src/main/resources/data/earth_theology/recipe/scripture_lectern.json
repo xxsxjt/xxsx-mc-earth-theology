@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:lectern",
+    "minecraft:gold_ingot"
+  ],
+  "result": {
+    "id": "earth_theology:scripture_lectern",
+    "count": 1
+  }
+}

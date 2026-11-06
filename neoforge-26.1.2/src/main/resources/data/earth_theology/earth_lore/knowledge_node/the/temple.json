@@ -1,0 +1,56 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 5,
+  "gate": "soft",
+  "requires": [
+    {
+      "all": "earth_theology:the/sanctum"
+    },
+    {
+      "all": "earth_theology:the/relics"
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "sanctum>=40"
+    }
+  ],
+  "unlocks": [
+    {
+      "block": "earth_theology:temple_keystone"
+    },
+    {
+      "item": "earth_theology:temple_keystone"
+    },
+    {
+      "ability": "earth_theology:temple"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:bell",
+        "count": 1
+      },
+      {
+        "ingredient": "earth_theology:shrine_altar",
+        "count": 1
+      },
+      {
+        "ingredient": "minecraft:gold_ingot",
+        "count": 4
+      }
+    ],
+    "ticks": 6000
+  },
+  "fail_codes": [
+    "sanctum_low"
+  ],
+  "name_key": "lore.earth_theology.the.temple",
+  "desc_key": "lore.earth_theology.the.temple.desc"
+}

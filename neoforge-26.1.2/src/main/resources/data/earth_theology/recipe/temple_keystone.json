@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SGS",
+    "GBG",
+    "SGS"
+  ],
+  "key": {
+    "S": "minecraft:chiseled_stone_bricks",
+    "G": "minecraft:gold_ingot",
+    "B": "minecraft:bell"
+  },
+  "result": {
+    "id": "earth_theology:temple_keystone",
+    "count": 1
+  }
+}

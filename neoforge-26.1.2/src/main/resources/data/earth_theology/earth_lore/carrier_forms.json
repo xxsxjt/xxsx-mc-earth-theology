@@ -1,0 +1,9 @@
+{
+  "forms": [
+    {
+      "carrier": "earth_theology:blank_scroll",
+      "result": "earth_theology:scripture_scroll",
+      "discipline": "earth_lore:the"
+    }
+  ]
+}

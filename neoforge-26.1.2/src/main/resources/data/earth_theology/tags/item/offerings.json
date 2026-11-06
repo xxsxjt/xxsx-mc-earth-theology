@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#earth_theology:offerings/common",
+    "#earth_theology:offerings/fine",
+    "#earth_theology:offerings/precious"
+  ]
+}

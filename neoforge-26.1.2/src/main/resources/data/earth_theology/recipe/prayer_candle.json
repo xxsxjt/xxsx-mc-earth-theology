@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:candle",
+    "minecraft:candle",
+    "minecraft:gold_nugget"
+  ],
+  "result": {
+    "id": "earth_theology:prayer_candle",
+    "count": 2
+  }
+}

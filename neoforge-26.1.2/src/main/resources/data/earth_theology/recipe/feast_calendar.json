@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:clock",
+    "minecraft:paper",
+    "minecraft:paper",
+    "minecraft:paper"
+  ],
+  "result": {
+    "id": "earth_theology:feast_calendar",
+    "count": 1
+  }
+}

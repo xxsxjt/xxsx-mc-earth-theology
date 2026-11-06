@@ -1,0 +1,58 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 6,
+  "gate": "hard",
+  "requires": [
+    {
+      "all": "earth_theology:the/exorcism"
+    },
+    {
+      "all": "earth_theology:the/temple"
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "sanctum>=40"
+    }
+  ],
+  "unlocks": [
+    {
+      "item": "earth_theology:ward_charm"
+    },
+    {
+      "recipe": "earth_theology:ward_charm"
+    },
+    {
+      "block": "earth_theology:ward_stone"
+    },
+    {
+      "item": "earth_theology:ward_stone"
+    },
+    {
+      "recipe": "earth_theology:ward_stone"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "earth_theology:holy_water",
+        "count": 8
+      },
+      {
+        "ingredient": "minecraft:chiseled_stone_bricks",
+        "count": 4
+      }
+    ],
+    "ticks": 7200
+  },
+  "fail_codes": [
+    "sanctum_low"
+  ],
+  "name_key": "lore.earth_theology.the.sanctuary_ward",
+  "desc_key": "lore.earth_theology.the.sanctuary_ward.desc"
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "W W",
+    "WGW",
+    "WWW"
+  ],
+  "key": {
+    "W": "minecraft:white_wool",
+    "G": "minecraft:gold_ingot"
+  },
+  "result": {
+    "id": "earth_theology:vestment",
+    "count": 1
+  }
+}

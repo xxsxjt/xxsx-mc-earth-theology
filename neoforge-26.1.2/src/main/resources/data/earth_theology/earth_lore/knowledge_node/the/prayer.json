@@ -1,0 +1,42 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 1,
+  "gate": "soft",
+  "requires": [],
+  "item_requires": [],
+  "unlocks": [
+    {
+      "item": "earth_theology:prayer_beads"
+    },
+    {
+      "item": "earth_theology:blank_scroll"
+    },
+    {
+      "item": "earth_theology:incense"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [
+    "earth_theology:priest",
+    "minecraft:cleric"
+  ],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:candle",
+        "count": 2
+      },
+      {
+        "ingredient": "minecraft:paper",
+        "count": 4
+      }
+    ],
+    "ticks": 600
+  },
+  "fail_codes": [],
+  "name_key": "lore.earth_theology.the.prayer",
+  "desc_key": "lore.earth_theology.the.prayer.desc"
+}

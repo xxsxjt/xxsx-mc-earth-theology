@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "earth_theology:vestment"
+      }
+    ],
+    "humanoid_baby": [
+      {
+        "texture": "earth_theology:vestment"
+      }
+    ]
+  }
+}

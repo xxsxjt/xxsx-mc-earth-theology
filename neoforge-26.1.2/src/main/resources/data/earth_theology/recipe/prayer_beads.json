@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:string",
+    "#minecraft:wooden_buttons",
+    "#minecraft:wooden_buttons",
+    "#minecraft:wooden_buttons",
+    "#minecraft:wooden_buttons"
+  ],
+  "result": {
+    "id": "earth_theology:prayer_beads",
+    "count": 1
+  }
+}

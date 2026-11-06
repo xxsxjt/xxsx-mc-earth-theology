@@ -1,0 +1,41 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 8,
+  "gate": "cap",
+  "requires": [
+    {
+      "all": "earth_theology:the/miracles"
+    }
+  ],
+  "item_requires": [],
+  "unlocks": [
+    {
+      "capstone": "THE"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "earth_theology:relic",
+        "count": 2
+      },
+      {
+        "ingredient": "earth_theology:incense",
+        "count": 16
+      },
+      {
+        "ingredient": "minecraft:gold_block",
+        "count": 2
+      }
+    ],
+    "ticks": 12000
+  },
+  "fail_codes": [],
+  "name_key": "lore.earth_theology.the.theology_mastery",
+  "desc_key": "lore.earth_theology.the.theology_mastery.desc"
+}

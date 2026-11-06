@@ -1,0 +1,57 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 7,
+  "gate": "hard",
+  "requires": [
+    {
+      "all": "earth_theology:the/healing_prayer"
+    },
+    {
+      "all": "earth_theology:the/revelation"
+    },
+    {
+      "all": "earth_theology:the/sanctuary_ward"
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "thunder"
+    },
+    {
+      "cond": "sanctum>=60"
+    }
+  ],
+  "unlocks": [
+    {
+      "ability": "earth_theology:miracle"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "earth_theology:relic",
+        "count": 1
+      },
+      {
+        "ingredient": "earth_theology:ward_stone",
+        "count": 1
+      },
+      {
+        "ingredient": "earth_theology:holy_water",
+        "count": 8
+      }
+    ],
+    "ticks": 9600
+  },
+  "fail_codes": [
+    "needs_thunder",
+    "sanctum_low"
+  ],
+  "name_key": "lore.earth_theology.the.miracles",
+  "desc_key": "lore.earth_theology.the.miracles.desc"
+}

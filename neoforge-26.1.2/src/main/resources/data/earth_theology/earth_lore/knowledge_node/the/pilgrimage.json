@@ -1,0 +1,41 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 3,
+  "gate": "soft",
+  "requires": [
+    {
+      "all": "earth_theology:the/sanctum"
+    }
+  ],
+  "item_requires": [],
+  "unlocks": [
+    {
+      "item": "earth_theology:pilgrim_staff"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:leather_boots",
+        "count": 1
+      },
+      {
+        "ingredient": "minecraft:compass",
+        "count": 1
+      },
+      {
+        "ingredient": "minecraft:paper",
+        "count": 4
+      }
+    ],
+    "ticks": 2400
+  },
+  "fail_codes": [],
+  "name_key": "lore.earth_theology.the.pilgrimage",
+  "desc_key": "lore.earth_theology.the.pilgrimage.desc"
+}

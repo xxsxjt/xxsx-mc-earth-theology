@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:charcoal",
+    "#minecraft:small_flowers",
+    "#minecraft:small_flowers",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "earth_theology:incense",
+    "count": 4
+  }
+}

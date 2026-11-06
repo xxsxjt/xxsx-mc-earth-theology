@@ -1,0 +1,46 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 4,
+  "gate": "soft",
+  "requires": [
+    {
+      "all": "earth_theology:the/offerings"
+    },
+    {
+      "all": "earth_theology:the/pilgrimage"
+    }
+  ],
+  "item_requires": [],
+  "unlocks": [
+    {
+      "block": "earth_theology:reliquary"
+    },
+    {
+      "item": "earth_theology:reliquary"
+    },
+    {
+      "item": "earth_theology:relic"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:gold_block",
+        "count": 1
+      },
+      {
+        "ingredient": "earth_theology:pilgrim_staff",
+        "count": 1
+      }
+    ],
+    "ticks": 4800
+  },
+  "fail_codes": [],
+  "name_key": "lore.earth_theology.the.relics",
+  "desc_key": "lore.earth_theology.the.relics.desc"
+}

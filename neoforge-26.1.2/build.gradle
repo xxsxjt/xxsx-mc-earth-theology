@@ -1,0 +1,82 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = '0.1.0'
+group = 'com.xxsx.earththeology'
+base.archivesName = 'earth-theology-neoforge-26.1.2'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+neoForge {
+    version = '26.1.2.124'
+
+    runs {
+        server {
+            server()
+            gameDirectory = project.file('runs/server')
+            programArgument('--nogui')
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = project.file('runs/gametest')
+        }
+    }
+
+    mods {
+        earth_theology {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+repositories {
+    maven {
+        url = uri('https://maven.blamejared.com')
+        content {
+            includeGroup 'mezz.jei'
+        }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation files('../../earth_lore/neoforge-26.1.2/build/libs/earth-lore-neoforge-26.1.2-0.1.0.jar')
+    compileOnly 'mezz.jei:jei-26.1.2-common-api:29.53.0.112'
+    compileOnly 'mezz.jei:jei-26.1.2-neoforge-api:29.53.0.112'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+}
+
+configurations {
+    testCompileClasspath.extendsFrom compileClasspath
+    testRuntimeClasspath.extendsFrom runtimeClasspath
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+}
+
+jar {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    from('../LICENSE') {
+        into 'META-INF'
+    }
+    manifest {
+        attributes([
+            'Specification-Title'     : 'earth_theology',
+            'Specification-Vendor'    : 'xxsx',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.jar.archiveVersion,
+            'Implementation-Vendor'   : 'xxsx'
+        ])
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+

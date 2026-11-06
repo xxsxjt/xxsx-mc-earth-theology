@@ -1,0 +1,44 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 4,
+  "gate": "soft",
+  "requires": [
+    {
+      "all": "earth_theology:the/scriptures"
+    },
+    {
+      "all": "earth_theology:the/blessings"
+    }
+  ],
+  "item_requires": [],
+  "unlocks": [
+    {
+      "item": "earth_theology:vestment"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:white_wool",
+        "count": 4
+      },
+      {
+        "ingredient": "minecraft:gold_ingot",
+        "count": 2
+      },
+      {
+        "ingredient": "earth_theology:blank_scroll",
+        "count": 2
+      }
+    ],
+    "ticks": 4800
+  },
+  "fail_codes": [],
+  "name_key": "lore.earth_theology.the.ordination",
+  "desc_key": "lore.earth_theology.the.ordination.desc"
+}

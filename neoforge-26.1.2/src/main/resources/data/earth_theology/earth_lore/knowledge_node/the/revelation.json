@@ -1,0 +1,53 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 6,
+  "gate": "hard",
+  "requires": [
+    {
+      "all": "earth_theology:the/ordination"
+    },
+    {
+      "any": [
+        "xuanhuan_earth:xua/divination",
+        "earth_theology:the/liturgical_calendar"
+      ]
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "night"
+    },
+    {
+      "cond": "sanctum>=30"
+    }
+  ],
+  "unlocks": [
+    {
+      "ability": "earth_theology:revelation"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "earth_theology:incense",
+        "count": 8
+      },
+      {
+        "ingredient": "minecraft:amethyst_shard",
+        "count": 4
+      }
+    ],
+    "ticks": 7200
+  },
+  "fail_codes": [
+    "needs_night",
+    "sanctum_low"
+  ],
+  "name_key": "lore.earth_theology.the.revelation",
+  "desc_key": "lore.earth_theology.the.revelation.desc"
+}

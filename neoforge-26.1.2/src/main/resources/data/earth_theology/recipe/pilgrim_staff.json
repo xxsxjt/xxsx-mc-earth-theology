@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  G",
+    " S ",
+    "S  "
+  ],
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "earth_theology:pilgrim_staff",
+    "count": 1
+  }
+}

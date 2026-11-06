@@ -1,0 +1,21 @@
+{
+  "type": "earth_lore:gated",
+  "node": "earth_theology:the/sanctuary_ward",
+  "recipe": {
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+      "SHS",
+      "HAH",
+      "SHS"
+    ],
+    "key": {
+      "S": "minecraft:chiseled_stone_bricks",
+      "H": "earth_theology:holy_water",
+      "A": "minecraft:amethyst_block"
+    },
+    "result": {
+      "id": "earth_theology:ward_stone",
+      "count": 1
+    }
+  }
+}

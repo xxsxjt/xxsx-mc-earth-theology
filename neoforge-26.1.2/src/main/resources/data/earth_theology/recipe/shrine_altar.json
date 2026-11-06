@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CGC",
+    "SSS",
+    "S S"
+  ],
+  "key": {
+    "C": "minecraft:candle",
+    "G": "minecraft:gold_ingot",
+    "S": "minecraft:stone_bricks"
+  },
+  "result": {
+    "id": "earth_theology:shrine_altar",
+    "count": 1
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GLG",
+    " C ",
+    "SSS"
+  ],
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "L": "minecraft:glass_pane",
+    "C": "minecraft:chest",
+    "S": "minecraft:smooth_stone_slab"
+  },
+  "result": {
+    "id": "earth_theology:reliquary",
+    "count": 1
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 2,
+  "gate": "soft",
+  "requires": [
+    {
+      "all": "earth_theology:the/prayer"
+    }
+  ],
+  "item_requires": [],
+  "unlocks": [
+    {
+      "block": "earth_theology:offering_tray"
+    },
+    {
+      "item": "earth_theology:offering_tray"
+    },
+    {
+      "ability": "earth_theology:offering"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [
+    "earth_theology:priest"
+  ],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:gold_nugget",
+        "count": 8
+      },
+      {
+        "ingredient": "minecraft:bread",
+        "count": 4
+      }
+    ],
+    "ticks": 1200
+  },
+  "fail_codes": [],
+  "name_key": "lore.earth_theology.the.offerings",
+  "desc_key": "lore.earth_theology.the.offerings.desc"
+}

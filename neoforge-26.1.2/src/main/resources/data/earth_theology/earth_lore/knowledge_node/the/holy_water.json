@@ -1,0 +1,43 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 3,
+  "gate": "soft",
+  "requires": [
+    {
+      "all": "earth_theology:the/sanctum"
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "sanctum>=10"
+    }
+  ],
+  "unlocks": [
+    {
+      "item": "earth_theology:holy_water"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:glass_bottle",
+        "count": 4
+      },
+      {
+        "ingredient": "minecraft:glowstone_dust",
+        "count": 2
+      }
+    ],
+    "ticks": 2400
+  },
+  "fail_codes": [
+    "sanctum_low"
+  ],
+  "name_key": "lore.earth_theology.the.holy_water",
+  "desc_key": "lore.earth_theology.the.holy_water.desc"
+}

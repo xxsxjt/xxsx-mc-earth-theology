@@ -1,0 +1,16 @@
+{
+  "type": "earth_lore:gated",
+  "node": "earth_theology:the/sanctuary_ward",
+  "recipe": {
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+      "minecraft:string",
+      "minecraft:gold_ingot",
+      "earth_theology:holy_water"
+    ],
+    "result": {
+      "id": "earth_theology:ward_charm",
+      "count": 1
+    }
+  }
+}

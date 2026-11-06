@@ -1,0 +1,46 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 3,
+  "gate": "hard",
+  "requires": [
+    {
+      "all": "earth_theology:the/sanctum"
+    },
+    {
+      "all": "earth_theology:the/offerings"
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "sanctum>=20"
+    }
+  ],
+  "unlocks": [
+    {
+      "ability": "earth_theology:blessing"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "earth_theology:incense",
+        "count": 4
+      },
+      {
+        "ingredient": "minecraft:glowstone_dust",
+        "count": 4
+      }
+    ],
+    "ticks": 2400
+  },
+  "fail_codes": [
+    "sanctum_low"
+  ],
+  "name_key": "lore.earth_theology.the.blessings",
+  "desc_key": "lore.earth_theology.the.blessings.desc"
+}

@@ -1,0 +1,49 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 4,
+  "gate": "hard",
+  "requires": [
+    {
+      "all": "earth_theology:the/blessings"
+    },
+    {
+      "any": [
+        "earth_on_minecraft:med/first_aid",
+        "earth_theology:the/holy_water"
+      ]
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "sanctum>=20"
+    }
+  ],
+  "unlocks": [
+    {
+      "ability": "earth_theology:healing_prayer"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "earth_theology:holy_water",
+        "count": 2
+      },
+      {
+        "ingredient": "minecraft:golden_apple",
+        "count": 1
+      }
+    ],
+    "ticks": 4800
+  },
+  "fail_codes": [
+    "sanctum_low"
+  ],
+  "name_key": "lore.earth_theology.the.healing_prayer",
+  "desc_key": "lore.earth_theology.the.healing_prayer.desc"
+}

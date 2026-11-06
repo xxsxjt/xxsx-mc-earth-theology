@@ -1,0 +1,65 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 2,
+  "gate": "soft",
+  "requires": [
+    {
+      "all": "earth_theology:the/prayer"
+    }
+  ],
+  "item_requires": [],
+  "unlocks": [
+    {
+      "block": "earth_theology:shrine_altar"
+    },
+    {
+      "item": "earth_theology:shrine_altar"
+    },
+    {
+      "block": "earth_theology:prayer_candle"
+    },
+    {
+      "item": "earth_theology:prayer_candle"
+    },
+    {
+      "block": "earth_theology:scripture_lectern"
+    },
+    {
+      "item": "earth_theology:scripture_lectern"
+    },
+    {
+      "block": "earth_theology:pew"
+    },
+    {
+      "item": "earth_theology:pew"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [
+    "earth_theology:priest",
+    "minecraft:cleric"
+  ],
+  "research": {
+    "items": [
+      {
+        "ingredient": "minecraft:candle",
+        "count": 4
+      },
+      {
+        "ingredient": "minecraft:gold_ingot",
+        "count": 1
+      },
+      {
+        "ingredient": "minecraft:stone_bricks",
+        "count": 8
+      }
+    ],
+    "ticks": 1200
+  },
+  "fail_codes": [],
+  "name_key": "lore.earth_theology.the.sanctum",
+  "desc_key": "lore.earth_theology.the.sanctum.desc"
+}

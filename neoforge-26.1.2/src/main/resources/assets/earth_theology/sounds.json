@@ -1,0 +1,96 @@
+{
+  "item.prayer_beads.pray": {
+    "subtitle": "subtitles.earth_theology.item.prayer_beads.pray",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.5
+      }
+    ]
+  },
+  "block.shrine_altar.offer": {
+    "subtitle": "subtitles.earth_theology.block.shrine_altar.offer",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event"
+      }
+    ]
+  },
+  "block.shrine_altar.bless": {
+    "subtitle": "subtitles.earth_theology.block.shrine_altar.bless",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event"
+      }
+    ]
+  },
+  "block.shrine_altar.exorcise": {
+    "subtitle": "subtitles.earth_theology.block.shrine_altar.exorcise",
+    "sounds": [
+      {
+        "name": "minecraft:entity.zombie_villager.cure",
+        "type": "event",
+        "volume": 0.7
+      }
+    ]
+  },
+  "block.censer.burn": {
+    "subtitle": "subtitles.earth_theology.block.censer.burn",
+    "sounds": [
+      {
+        "name": "minecraft:block.campfire.crackle",
+        "type": "event",
+        "volume": 0.5
+      }
+    ]
+  },
+  "block.temple_keystone.formed": {
+    "subtitle": "subtitles.earth_theology.block.temple_keystone.formed",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "item.ward_charm.trigger": {
+    "subtitle": "subtitles.earth_theology.item.ward_charm.trigger",
+    "sounds": [
+      {
+        "name": "minecraft:item.totem.use",
+        "type": "event",
+        "volume": 0.4
+      }
+    ]
+  },
+  "event.miracle.trigger": {
+    "subtitle": "subtitles.earth_theology.event.miracle.trigger",
+    "sounds": [
+      {
+        "name": "minecraft:ui.toast.challenge_complete",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.villager.work_priest": {
+    "subtitle": "subtitles.earth_theology.entity.villager.work_priest",
+    "sounds": [
+      {
+        "name": "minecraft:entity.villager.work_cleric",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.villager.work_scribe": {
+    "subtitle": "subtitles.earth_theology.entity.villager.work_scribe",
+    "sounds": [
+      {
+        "name": "minecraft:entity.villager.work_librarian",
+        "type": "event"
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "earth_lore:gated",
+  "node": "earth_theology:the/exorcism",
+  "recipe": {
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+      " N ",
+      "I I",
+      "III"
+    ],
+    "key": {
+      "N": "minecraft:iron_nugget",
+      "I": "minecraft:iron_ingot"
+    },
+    "result": {
+      "id": "earth_theology:censer",
+      "count": 1
+    }
+  }
+}

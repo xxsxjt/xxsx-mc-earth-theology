@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "N N",
+    "SSS"
+  ],
+  "key": {
+    "N": "minecraft:gold_nugget",
+    "S": "minecraft:smooth_stone_slab"
+  },
+  "result": {
+    "id": "earth_theology:offering_tray",
+    "count": 1
+  }
+}

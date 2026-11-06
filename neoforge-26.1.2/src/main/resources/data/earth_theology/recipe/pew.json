@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "P  ",
+    "SSS",
+    "P P"
+  ],
+  "key": {
+    "P": "#minecraft:planks",
+    "S": "#minecraft:wooden_slabs"
+  },
+  "result": {
+    "id": "earth_theology:pew",
+    "count": 2
+  }
+}

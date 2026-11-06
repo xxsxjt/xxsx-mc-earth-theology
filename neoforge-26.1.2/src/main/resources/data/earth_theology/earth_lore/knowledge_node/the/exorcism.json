@@ -1,0 +1,55 @@
+{
+  "discipline": "earth_lore:the",
+  "tier": 4,
+  "gate": "hard",
+  "requires": [
+    {
+      "all": "earth_theology:the/blessings"
+    },
+    {
+      "all": "earth_theology:the/holy_water"
+    }
+  ],
+  "item_requires": [
+    {
+      "cond": "night"
+    }
+  ],
+  "unlocks": [
+    {
+      "block": "earth_theology:censer"
+    },
+    {
+      "item": "earth_theology:censer"
+    },
+    {
+      "recipe": "earth_theology:censer"
+    },
+    {
+      "ability": "earth_theology:exorcism"
+    }
+  ],
+  "literature": [
+    "notes",
+    "scripture"
+  ],
+  "teachers": [],
+  "research": {
+    "items": [
+      {
+        "ingredient": "earth_theology:holy_water",
+        "count": 4
+      },
+      {
+        "ingredient": "minecraft:bone",
+        "count": 8
+      }
+    ],
+    "ticks": 4800
+  },
+  "fail_codes": [
+    "needs_night"
+  ],
+  "name_key": "lore.earth_theology.the.exorcism",
+  "desc_key": "lore.earth_theology.the.exorcism.desc"
+}

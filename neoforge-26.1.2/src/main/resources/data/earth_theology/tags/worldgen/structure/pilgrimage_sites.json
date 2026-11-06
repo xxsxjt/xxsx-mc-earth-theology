@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:village",
+    "minecraft:desert_pyramid",
+    "minecraft:jungle_pyramid",
+    "minecraft:ancient_city",
+    "minecraft:trial_chambers",
+    "minecraft:mansion",
+    "minecraft:monument",
+    "minecraft:stronghold"
+  ]
+}
