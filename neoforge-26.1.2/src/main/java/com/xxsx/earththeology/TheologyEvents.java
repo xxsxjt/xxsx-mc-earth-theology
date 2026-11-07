@@ -147,9 +147,19 @@ public final class TheologyEvents {
                 if (src instanceof LivingEntity attacker && attacker != villager) {
                     villager.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                             net.minecraft.world.effect.MobEffects.RESISTANCE, 80, 0, true, false, true));
-                    attacker.hurtServer(vLevel, vLevel.damageSources().magic(), 5.0F);
+                    villager.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                            net.minecraft.world.effect.MobEffects.REGENERATION, 100, 0, true, false, true));
                     attacker.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                             net.minecraft.world.effect.MobEffects.WEAKNESS, 100, 0, false, true, true));
+                    attacker.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                            net.minecraft.world.effect.MobEffects.GLOWING, 120, 0, false, true, true));
+                    for (net.minecraft.world.entity.animal.golem.IronGolem golem : vLevel.getEntitiesOfClass(
+                            net.minecraft.world.entity.animal.golem.IronGolem.class,
+                            villager.getBoundingBox().inflate(24.0D))) {
+                        if (golem.isAlive() && !golem.isPlayerCreated()) {
+                            golem.setTarget(attacker);
+                        }
+                    }
                     vLevel.playSound(null, villager.blockPosition(), EarthTheology.SOUND_ALTAR_EXORCISE.get(), SoundSource.NEUTRAL, 0.8F, 1.2F);
                 }
             }
