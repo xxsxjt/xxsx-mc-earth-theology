@@ -3,7 +3,11 @@ package com.xxsx.earththeology;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -48,6 +52,16 @@ public final class PewSeatEntity extends Entity {
         BlockState state = serverLevel.getBlockState(this.sourcePos);
         if (!state.is(EarthTheology.PEW.get()) || this.getPassengers().isEmpty()) {
             this.discard();
+            return;
+        }
+        if (this.tickCount % 60 == 0 && this.getFirstPassenger() instanceof ServerPlayer player) {
+            int sanctum = SanctumFieldSavedData.get(serverLevel).getSanctumAt(serverLevel, this.sourcePos);
+            if (sanctum >= 10) {
+                player.addEffect(new MobEffectInstance(EarthTheology.SERENITY, 160, 0, false, true, true));
+                TheologyItems.treatEarthHumanInjuries(player, 0.0D, 0.5D, 5.0D, 3.0D);
+                TheologyBlocks.emitSacredParticles(serverLevel, this.sourcePos, 2, 1, 2);
+                serverLevel.playSound(null, this.sourcePos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.25F, 1.25F);
+            }
         }
     }
 

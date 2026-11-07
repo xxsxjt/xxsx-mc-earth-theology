@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": [
+    "earth_theology:monastery_sanctuary"
+  ],
+  "step": "surface_structures"
+}

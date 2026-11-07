@@ -358,8 +358,11 @@ public final class SanctumFieldSavedData extends SavedData {
         List<String> templeFailures = checkTempleFormation(level, center);
         boolean templeFormed = templeFailures.isEmpty();
         record.setTemple(templeFormed);
+        boolean isGeneratedAltar = level.getBlockEntity(center) instanceof TheologyBlockEntities.ShrineAltarBlockEntity altarBe
+                && altarBe.generatedSanctuary();
         boolean ownerKnowsTemple = record.ownerUuid() != null
-                && LoreApi.knows(record.ownerUuid(), TheologyLoreIntegration.NODE_TEMPLE);
+                ? LoreApi.knows(record.ownerUuid(), TheologyLoreIntegration.NODE_TEMPLE)
+                : isGeneratedAltar;
         boolean templeBonusApplies = templeFormed && ownerKnowsTemple;
         boolean blessed = record.blessedUntil() > level.getGameTime();
         double desec = getChunkDesecration(level, center);

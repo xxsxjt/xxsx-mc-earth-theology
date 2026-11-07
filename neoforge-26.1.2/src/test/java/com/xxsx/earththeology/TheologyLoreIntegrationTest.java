@@ -100,6 +100,48 @@ class TheologyLoreIntegrationTest {
         assertTrue(TheologyMath.meetsPilgrimDistance(0, 0, 512, 0));
     }
 
+    @Test
+    void sanctuaryTerrainPriestMinistryAndPrayerProgressMatchSpec() throws IOException {
+        // Valid flat or gentle slope above sea level with no fluid
+        assertTrue(TheologyMath.isValidSanctuaryTerrain(64, 67, 63, false));
+        // Reject underwater or below sea level
+        assertFalse(TheologyMath.isValidSanctuaryTerrain(60, 62, 63, false));
+        // Reject fluid presence (no floating over water or uncontained water sources)
+        assertFalse(TheologyMath.isValidSanctuaryTerrain(65, 66, 63, true));
+        // Reject steep cliffs (delta > MAX_SANCTUARY_SLOPE_DELTA)
+        assertFalse(TheologyMath.isValidSanctuaryTerrain(65, 72, 63, false));
+
+        // Priest ministry scaling across villager levels 1..5
+        assertEquals(8.0F, TheologyMath.computePriestExorcismDamage(1), 1e-5F);
+        assertEquals(16.0F, TheologyMath.computePriestExorcismDamage(5), 1e-5F);
+        assertEquals(6.0F, TheologyMath.computePriestHealAmount(1), 1e-5F);
+        assertEquals(14.0F, TheologyMath.computePriestHealAmount(5), 1e-5F);
+        assertEquals(1600, TheologyMath.computePriestBlessTicks(1));
+        assertEquals(3200, TheologyMath.computePriestBlessTicks(5));
+
+        // Prayer progress clamping
+        assertEquals(0.0F, TheologyMath.computePrayerProgress(0, 100), 1e-5F);
+        assertEquals(0.5F, TheologyMath.computePrayerProgress(50, 100), 1e-5F);
+        assertEquals(1.0F, TheologyMath.computePrayerProgress(140, 100), 1e-5F);
+
+        // Verify sanctuary chest loot table and worldgen JSONs exist and parse cleanly
+        List<String> requiredJson = List.of(
+                "src/main/resources/data/earth_theology/loot_table/chests/sanctuary_chest.json",
+                "src/main/resources/data/earth_theology/worldgen/configured_feature/wayside_shrine.json",
+                "src/main/resources/data/earth_theology/worldgen/configured_feature/monastery_sanctuary.json",
+                "src/main/resources/data/earth_theology/worldgen/placed_feature/wayside_shrine.json",
+                "src/main/resources/data/earth_theology/worldgen/placed_feature/monastery_sanctuary.json",
+                "src/main/resources/data/earth_theology/neoforge/biome_modifier/add_wayside_shrines.json",
+                "src/main/resources/data/earth_theology/neoforge/biome_modifier/add_monastery_sanctuaries.json"
+        );
+        for (String rel : requiredJson) {
+            Path p = Path.of(rel);
+            assertTrue(Files.exists(p), "Missing required resource: " + rel);
+            JsonObject parsed = JsonParser.parseString(Files.readString(p, StandardCharsets.UTF_8)).getAsJsonObject();
+            assertNotNull(parsed);
+        }
+    }
+
     private static List<NodeDef> loadTheologyNodes() throws IOException {
         Path dir = Path.of("src/main/resources/data/earth_theology/earth_lore/knowledge_node/the");
         List<NodeDef> list = new ArrayList<>();

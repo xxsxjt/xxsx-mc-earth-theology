@@ -25,6 +25,7 @@ public final class TheologyMath {
     public static final int PILGRIM_MIN_DISTANCE = 512;
     public static final int PILGRIM_STAMPS = 3;
     public static final int MIRACLE_INTERVAL_DAYS = 7;
+    public static final int MAX_SANCTUARY_SLOPE_DELTA = 4;
 
     private TheologyMath() {
     }
@@ -187,6 +188,40 @@ public final class TheologyMath {
         long dx = (long) currentX - (long) startX;
         long dz = (long) currentZ - (long) startZ;
         return dx * dx + dz * dz >= (long) PILGRIM_MIN_DISTANCE * (long) PILGRIM_MIN_DISTANCE;
+    }
+
+    /** Worldgen terrain validation: rejects water/fluids, below-sea-level sites, and steep slopes (> 4 blocks). */
+    public static boolean isValidSanctuaryTerrain(int minY, int maxY, int seaLevel, boolean hasFluid) {
+        if (hasFluid || minY <= seaLevel || maxY < minY) {
+            return false;
+        }
+        return (maxY - minY) <= MAX_SANCTUARY_SLOPE_DELTA;
+    }
+
+    /** Novice/clergy Priest exorcism damage scaling by villager level (1..5). */
+    public static float computePriestExorcismDamage(int villagerLevel) {
+        int clamped = Math.max(1, Math.min(5, villagerLevel));
+        return 6.0F + clamped * 2.0F;
+    }
+
+    /** Novice/clergy Priest healing amount by villager level (1..5). */
+    public static float computePriestHealAmount(int villagerLevel) {
+        int clamped = Math.max(1, Math.min(5, villagerLevel));
+        return 4.0F + clamped * 2.0F;
+    }
+
+    /** Novice/clergy Priest blessing duration in ticks by villager level (1..5). */
+    public static int computePriestBlessTicks(int villagerLevel) {
+        int clamped = Math.max(1, Math.min(5, villagerLevel));
+        return 1200 + clamped * 400;
+    }
+
+    /** Normalized [0..1] progress for prayer channeling HUD. */
+    public static float computePrayerProgress(int elapsedTicks, int requiredTicks) {
+        if (requiredTicks <= 0) {
+            return 0.0F;
+        }
+        return Math.max(0.0F, Math.min(1.0F, (float) elapsedTicks / (float) requiredTicks));
     }
 }
 

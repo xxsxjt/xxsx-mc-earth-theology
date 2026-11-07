@@ -10,11 +10,14 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -27,6 +30,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -53,6 +57,21 @@ public final class TheologyBlocks {
 
     public static Component failMsg(String code) {
         return Component.translatable("theology.earth_theology.fail." + code).withStyle(ChatFormatting.RED);
+    }
+
+    public static void emitSacredParticles(ServerLevel level, BlockPos pos, int endRodCount, int waxOnCount, int glowCount) {
+        double cx = pos.getX() + 0.5D;
+        double cy = pos.getY() + 0.65D;
+        double cz = pos.getZ() + 0.5D;
+        if (endRodCount > 0) {
+            level.sendParticles(ParticleTypes.END_ROD, cx, cy, cz, endRodCount, 0.35D, 0.35D, 0.35D, 0.03D);
+        }
+        if (waxOnCount > 0) {
+            level.sendParticles(ParticleTypes.WAX_ON, cx, cy, cz, waxOnCount, 0.40D, 0.30D, 0.40D, 0.02D);
+        }
+        if (glowCount > 0) {
+            level.sendParticles(ParticleTypes.GLOW, cx, cy, cz, glowCount, 0.35D, 0.35D, 0.35D, 0.02D);
+        }
     }
 
     /** T-002 shrine_altar. */
@@ -100,6 +119,12 @@ public final class TheologyBlocks {
 
         @Override
         protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+            if (stack.is(EarthTheology.PILGRIM_STAFF.get())) {
+                if (!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
+                    return InteractionResult.SUCCESS;
+                }
+                return TheologyItems.PilgrimStaffItem.handleAltarInteraction(serverLevel, pos, serverPlayer, hand, stack);
+            }
             if (!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
                 return InteractionResult.SUCCESS;
             }
@@ -108,15 +133,23 @@ public final class TheologyBlocks {
             }
             SanctumFieldSavedData field = SanctumFieldSavedData.get(serverLevel);
             Optional<SanctumFieldSavedData.AltarRecord> recordOpt = field.getAltar(pos);
+            if (recordOpt.isEmpty() && field.nearestAltar(pos, TheologyMath.ALTAR_REACH).isEmpty()) {
+                if (field.tryRegisterAltar(serverLevel, pos, altarBe.ownerUuid() != null ? altarBe.ownerUuid() : serverPlayer.getUUID())) {
+                    recordOpt = field.getAltar(pos);
+                }
+            }
 
             if (player.isShiftKeyDown() && stack.is(EarthTheology.INCENSE.get())) {
-                return performBlessing(serverLevel, pos, serverPlayer, stack, altarBe, field, recordOpt);
+                return performBlessing(serverLevel, pos, serverPlayer, hand, stack, altarBe, field, recordOpt);
             }
             if (isWaterBottle(stack)) {
                 return makeHolyWater(serverLevel, pos, serverPlayer, hand, stack, altarBe, field, recordOpt);
             }
             if (stack.is(EarthTheology.HOLY_WATER.get())) {
-                return performExorcism(serverLevel, pos, serverPlayer, stack, altarBe, field, recordOpt);
+                return performExorcism(serverLevel, pos, serverPlayer, hand, stack, altarBe, field, recordOpt);
+            }
+            if (stack.is(Items.BREAD)) {
+                return performCommunion(serverLevel, pos, serverPlayer, hand, stack, field, recordOpt);
             }
             return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
@@ -126,11 +159,23 @@ public final class TheologyBlocks {
             if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
                 SanctumFieldSavedData field = SanctumFieldSavedData.get(serverLevel);
                 Optional<SanctumFieldSavedData.AltarRecord> recordOpt = field.getAltar(pos);
+                if (recordOpt.isEmpty() && field.nearestAltar(pos, TheologyMath.ALTAR_REACH).isEmpty()) {
+                    if (field.tryRegisterAltar(serverLevel, pos, serverPlayer.getUUID())) {
+                        recordOpt = field.getAltar(pos);
+                    }
+                }
                 if (recordOpt.isEmpty()) {
                     serverPlayer.sendOverlayMessage(failMsg("altar_too_close"));
-                    return InteractionResult.CONSUME;
+                    return InteractionResult.FAIL;
                 }
-                SanctumFieldSavedData.ScanBreakdown scan = field.rescanAltar(serverLevel, recordOpt.get());
+                SanctumFieldSavedData.AltarRecord record = recordOpt.get();
+                if (record.ownerUuid() == null) {
+                    record.setOwnerUuid(serverPlayer.getUUID());
+                    if (level.getBlockEntity(pos) instanceof TheologyBlockEntities.ShrineAltarBlockEntity altarBe && altarBe.ownerUuid() == null) {
+                        altarBe.setOwnerUuid(serverPlayer.getUUID());
+                    }
+                }
+                SanctumFieldSavedData.ScanBreakdown scan = field.rescanAltar(serverLevel, record);
                 serverPlayer.sendSystemMessage(Component.translatable(
                         "theology.earth_theology.altar.status",
                         scan.total(),
@@ -146,7 +191,10 @@ public final class TheologyBlocks {
                         String.format(java.util.Locale.ROOT, "%.1f", scan.desecration()),
                         Component.translatable(scan.templeFormed() ? "theology.earth_theology.altar.temple_yes" : "theology.earth_theology.altar.temple_no")
                 ).withStyle(ChatFormatting.GOLD));
-                return InteractionResult.CONSUME;
+                serverPlayer.swing(InteractionHand.MAIN_HAND, true);
+                serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.7F, 1.1F);
+                emitSacredParticles(serverLevel, pos, 4, 2, 4);
+                return InteractionResult.SUCCESS;
             }
             return InteractionResult.SUCCESS;
         }
@@ -191,14 +239,19 @@ public final class TheologyBlocks {
             } else if (!player.getInventory().add(holyWater)) {
                 player.drop(holyWater, false);
             }
+            player.swing(hand, true);
             level.playSound(null, pos, SoundEvents.BOTTLE_FILL, SoundSource.BLOCKS, 0.8F, 1.1F);
-            return InteractionResult.CONSUME;
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.8F, 1.2F);
+            level.playSound(null, pos, EarthTheology.SOUND_ALTAR_BLESS.get(), SoundSource.BLOCKS, 0.6F, 1.15F);
+            emitSacredParticles(level, pos, 8, 6, 8);
+            return InteractionResult.SUCCESS;
         }
 
         private static InteractionResult performBlessing(
                 ServerLevel level,
                 BlockPos pos,
                 ServerPlayer player,
+                InteractionHand hand,
                 ItemStack incenseStack,
                 TheologyBlockEntities.ShrineAltarBlockEntity altarBe,
                 SanctumFieldSavedData field,
@@ -234,16 +287,22 @@ public final class TheologyBlocks {
                     e -> e instanceof Player || e instanceof Villager)) {
                 if (target.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 64.0D) {
                     target.addEffect(new MobEffectInstance(EarthTheology.BLESSED, duration, 0, false, true, true));
+                    emitSacredParticles(level, target.blockPosition(), 6, 4, 4);
                 }
             }
+            player.swing(hand, true);
             level.playSound(null, pos, EarthTheology.SOUND_ALTAR_BLESS.get(), SoundSource.BLOCKS, 0.9F, 1.0F);
-            return InteractionResult.CONSUME;
+            level.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.6F, 1.2F);
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.8F, 1.1F);
+            emitSacredParticles(level, pos, 14, 10, 12);
+            return InteractionResult.SUCCESS;
         }
 
         private static InteractionResult performExorcism(
                 ServerLevel level,
                 BlockPos pos,
                 ServerPlayer player,
+                InteractionHand hand,
                 ItemStack holyWaterStack,
                 TheologyBlockEntities.ShrineAltarBlockEntity altarBe,
                 SanctumFieldSavedData field,
@@ -290,14 +349,49 @@ public final class TheologyBlocks {
                 if (TheologyTags.isUndead(entity)) {
                     entity.hurtServer(level, level.damageSources().magic(), damage);
                     entity.igniteForTicks(100);
+                    emitSacredParticles(level, entity.blockPosition(), 8, 4, 6);
                 } else if (entity instanceof Player targetPlayer) {
                     targetPlayer.removeEffect(MobEffects.WITHER);
                     targetPlayer.removeEffect(MobEffects.DARKNESS);
                     targetPlayer.removeEffect(MobEffects.BLINDNESS);
                 }
             }
+            player.swing(hand, true);
             level.playSound(null, pos, EarthTheology.SOUND_ALTAR_EXORCISE.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
-            return InteractionResult.CONSUME;
+            level.playSound(null, pos, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 0.9F, 0.9F);
+            level.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.7F, 1.15F);
+            emitSacredParticles(level, pos, 20, 12, 16);
+            return InteractionResult.SUCCESS;
+        }
+
+        private static InteractionResult performCommunion(
+                ServerLevel level,
+                BlockPos pos,
+                ServerPlayer player,
+                InteractionHand hand,
+                ItemStack breadStack,
+                SanctumFieldSavedData field,
+                Optional<SanctumFieldSavedData.AltarRecord> recordOpt
+        ) {
+            int sanctum = recordOpt.map(r -> field.rescanAltar(level, r).total()).orElse(0);
+            if (sanctum < 10) {
+                player.sendOverlayMessage(failMsg("sanctum_low"));
+                return InteractionResult.FAIL;
+            }
+            if (!player.getAbilities().instabuild) {
+                breadStack.shrink(1);
+            }
+            player.getFoodData().eat(6, 0.7F);
+            player.heal(3.0F);
+            player.addEffect(new MobEffectInstance(EarthTheology.SERENITY, 600, 0, false, true, true));
+            player.addEffect(new MobEffectInstance(EarthTheology.BLESSED, 400, 0, false, true, true));
+            TheologyItems.treatEarthHumanInjuries(player, 0.25D, 1.5D, 15.0D, 8.0D);
+            player.swing(hand, true);
+            player.sendOverlayMessage(Component.translatable("theology.earth_theology.altar.communion").withStyle(ChatFormatting.GOLD));
+            level.playSound(null, pos, EarthTheology.SOUND_ALTAR_BLESS.get(), SoundSource.BLOCKS, 0.8F, 1.1F);
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.8F, 1.2F);
+            emitSacredParticles(level, pos, 8, 6, 6);
+            return InteractionResult.SUCCESS;
         }
     }
 
@@ -324,6 +418,9 @@ public final class TheologyBlocks {
                     if (stack.is(Items.FIRE_CHARGE) && !player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
+                    serverLevel.playSound(null, pos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 0.8F, 1.1F);
+                    serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.5F, 1.3F);
+                    emitSacredParticles(serverLevel, pos, 4, 3, 4);
                 }
                 return InteractionResult.SUCCESS;
             }
@@ -336,10 +433,25 @@ public final class TheologyBlocks {
                 if (level instanceof ServerLevel serverLevel) {
                     serverLevel.setBlock(pos, state.setValue(LIT, false), Block.UPDATE_ALL);
                     SanctumFieldSavedData.get(serverLevel).rescanNearbyAltars(serverLevel, pos);
+                    serverLevel.playSound(null, pos, SoundEvents.CANDLE_EXTINGUISH, SoundSource.BLOCKS, 0.8F, 1.0F);
                 }
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
+        }
+
+        @Override
+        public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+            if (!state.getValue(LIT)) {
+                return;
+            }
+            double x = pos.getX() + 0.5D;
+            double y = pos.getY() + 0.65D;
+            double z = pos.getZ() + 0.5D;
+            level.addParticle(ParticleTypes.SMALL_FLAME, x, y, z, 0.0D, 0.0D, 0.0D);
+            if (random.nextInt(5) == 0) {
+                level.addParticle(ParticleTypes.END_ROD, x + (random.nextDouble() - 0.5D) * 0.2D, y + 0.1D, z + (random.nextDouble() - 0.5D) * 0.2D, 0.0D, 0.01D, 0.0D);
+            }
         }
     }
 
@@ -366,12 +478,15 @@ public final class TheologyBlocks {
         protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
             if (stack.is(EarthTheology.SCRIPTURE_SCROLL.get())) {
                 if (level.getBlockEntity(pos) instanceof TheologyBlockEntities.ScriptureLecternBlockEntity be && be.scroll().isEmpty()) {
-                    if (level instanceof ServerLevel) {
+                    if (level instanceof ServerLevel serverLevel) {
                         be.setScroll(stack.split(1));
+                        serverLevel.playSound(null, pos, SoundEvents.BOOK_PUT, SoundSource.BLOCKS, 0.9F, 1.0F);
+                        serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.6F, 1.2F);
+                        emitSacredParticles(serverLevel, pos, 6, 4, 6);
                     }
                     return InteractionResult.SUCCESS;
                 }
-                return InteractionResult.CONSUME;
+                return InteractionResult.SUCCESS;
             }
             return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
@@ -386,21 +501,27 @@ public final class TheologyBlocks {
                 return InteractionResult.PASS;
             }
             if (player.isShiftKeyDown()) {
-                if (level instanceof ServerLevel) {
+                if (level instanceof ServerLevel serverLevel) {
                     ItemStack taken = scroll.copy();
                     be.setScroll(ItemStack.EMPTY);
                     if (!player.getInventory().add(taken)) {
                         player.drop(taken, false);
                     }
+                    serverLevel.playSound(null, pos, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.8F, 0.9F);
+                    emitSacredParticles(serverLevel, pos, 3, 1, 3);
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (player instanceof ServerPlayer serverPlayer) {
+            if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
                 StudyResult result = LoreApi.beginStudy(serverPlayer, scroll);
                 if (!result.started()) {
                     serverPlayer.sendOverlayMessage(Component.translatable("lore.earth_lore.fail." + result.failCode()).withStyle(ChatFormatting.RED));
                     return InteractionResult.FAIL;
                 }
+                serverPlayer.swing(InteractionHand.MAIN_HAND, true);
+                serverLevel.playSound(null, pos, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.8F, 1.05F);
+                serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.5F, 1.15F);
+                emitSacredParticles(serverLevel, pos, 5, 3, 6);
             }
             return InteractionResult.SUCCESS;
         }
@@ -463,29 +584,39 @@ public final class TheologyBlocks {
                 }
                 return InteractionResult.FAIL;
             }
-            if (level instanceof ServerLevel) {
+            if (level instanceof ServerLevel serverLevel) {
                 if (!trayBe.insertStack(stack)) {
                     if (player instanceof ServerPlayer sp) {
                         sp.sendOverlayMessage(failMsg("full"));
                     }
                     return InteractionResult.FAIL;
                 }
+                if (trayBe.ownerUuid() == null) {
+                    trayBe.setOwnerUuid(player.getUUID());
+                }
+                player.swing(hand, true);
+                serverLevel.playSound(null, pos, EarthTheology.SOUND_ALTAR_OFFER.get(), SoundSource.BLOCKS, 0.8F, 1.1F);
+                serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.7F, 1.15F);
+                emitSacredParticles(serverLevel, pos, 6, 6, 4);
             }
             return InteractionResult.SUCCESS;
         }
 
         @Override
         protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-            if (level instanceof ServerLevel && level.getBlockEntity(pos) instanceof TheologyBlockEntities.OfferingTrayBlockEntity trayBe) {
+            if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof TheologyBlockEntities.OfferingTrayBlockEntity trayBe) {
                 ItemStack taken = trayBe.removeLastStack();
                 if (!taken.isEmpty()) {
                     if (!player.getInventory().add(taken)) {
                         player.drop(taken, false);
                     }
+                    player.swing(InteractionHand.MAIN_HAND, true);
+                    serverLevel.playSound(null, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 0.7F, 1.0F);
+                    emitSacredParticles(serverLevel, pos, 2, 0, 3);
                     return InteractionResult.SUCCESS;
                 }
             }
-            return InteractionResult.PASS;
+            return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
     }
 
@@ -521,7 +652,7 @@ public final class TheologyBlocks {
         protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
             if (stack.is(EarthTheology.INCENSE.get())) {
                 if (level.getBlockEntity(pos) instanceof TheologyBlockEntities.CenserBlockEntity be) {
-                    if (level instanceof ServerLevel) {
+                    if (level instanceof ServerLevel serverLevel) {
                         ItemStack cur = be.incenseStack();
                         int room = 16 - cur.getCount();
                         if (room > 0) {
@@ -533,6 +664,10 @@ public final class TheologyBlocks {
                                 stack.shrink(move);
                                 be.setChanged();
                             }
+                            player.swing(hand, true);
+                            serverLevel.playSound(null, pos, EarthTheology.SOUND_CENSER_BURN.get(), SoundSource.BLOCKS, 0.85F, 1.05F);
+                            serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.65F, 1.1F);
+                            emitSacredParticles(serverLevel, pos, 6, 6, 6);
                         }
                     }
                     return InteractionResult.SUCCESS;
@@ -543,7 +678,7 @@ public final class TheologyBlocks {
 
         @Override
         protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-            if (level instanceof ServerLevel && level.getBlockEntity(pos) instanceof TheologyBlockEntities.CenserBlockEntity be) {
+            if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof TheologyBlockEntities.CenserBlockEntity be) {
                 ItemStack cur = be.incenseStack();
                 if (!cur.isEmpty()) {
                     ItemStack taken = cur.copy();
@@ -551,10 +686,13 @@ public final class TheologyBlocks {
                     if (!player.getInventory().add(taken)) {
                         player.drop(taken, false);
                     }
+                    player.swing(InteractionHand.MAIN_HAND, true);
+                    serverLevel.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.6F, 1.0F);
+                    emitSacredParticles(serverLevel, pos, 2, 1, 2);
                     return InteractionResult.SUCCESS;
                 }
             }
-            return InteractionResult.PASS;
+            return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
     }
 
@@ -603,6 +741,9 @@ public final class TheologyBlocks {
                     seat.bindTo(pos);
                     serverLevel.addFreshEntity(seat);
                     player.startRiding(seat, false, false);
+                    player.swing(InteractionHand.MAIN_HAND, true);
+                    serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.55F, 1.2F);
+                    emitSacredParticles(serverLevel, pos, 4, 2, 4);
                 }
             }
             return InteractionResult.SUCCESS;
@@ -646,8 +787,16 @@ public final class TheologyBlocks {
                         }
                         return InteractionResult.FAIL;
                     }
-                    if (level instanceof ServerLevel) {
+                    if (level instanceof ServerLevel serverLevel) {
                         be.setRelic(stack.split(1));
+                        if (be.ownerUuid() == null) {
+                            be.setOwnerUuid(player.getUUID());
+                        }
+                        player.swing(hand, true);
+                        serverLevel.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.8F, 1.15F);
+                        serverLevel.playSound(null, pos, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 0.85F, 1.1F);
+                        serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.8F, 1.2F);
+                        emitSacredParticles(serverLevel, pos, 14, 10, 12);
                     }
                     return InteractionResult.SUCCESS;
                 }
@@ -657,12 +806,23 @@ public final class TheologyBlocks {
 
         @Override
         protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-            if (!player.isShiftKeyDown()) {
-                return InteractionResult.PASS;
-            }
-            if (level instanceof ServerLevel && level.getBlockEntity(pos) instanceof TheologyBlockEntities.ReliquaryBlockEntity be) {
+            if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof TheologyBlockEntities.ReliquaryBlockEntity be) {
                 if (be.relic().isEmpty()) {
                     return InteractionResult.PASS;
+                }
+                if (!player.isShiftKeyDown()) {
+                    CompoundTag tag = be.relic().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+                    String pilgrim = tag.getStringOr("pilgrim_name", "-");
+                    int sites = tag.getIntOr("sites", 3);
+                    if (player instanceof ServerPlayer sp) {
+                        sp.sendOverlayMessage(Component.translatable("theology.earth_theology.reliquary.inspect", pilgrim, sites).withStyle(ChatFormatting.GOLD));
+                        sp.addEffect(new MobEffectInstance(EarthTheology.SERENITY, 240, 0, false, true, true));
+                    }
+                    player.swing(InteractionHand.MAIN_HAND, true);
+                    serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.8F, 1.25F);
+                    serverLevel.playSound(null, pos, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 0.6F, 1.3F);
+                    emitSacredParticles(serverLevel, pos, 8, 4, 8);
+                    return InteractionResult.SUCCESS;
                 }
                 if (be.ownerUuid() != null && !be.ownerUuid().equals(player.getUUID())) {
                     if (player instanceof ServerPlayer sp) {
@@ -675,6 +835,9 @@ public final class TheologyBlocks {
                 if (!player.getInventory().add(taken)) {
                     player.drop(taken, false);
                 }
+                player.swing(InteractionHand.MAIN_HAND, true);
+                serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 0.8F, 1.0F);
+                emitSacredParticles(serverLevel, pos, 6, 4, 6);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.SUCCESS;
@@ -715,11 +878,17 @@ public final class TheologyBlocks {
                 if (fails.isEmpty()) {
                     sp.sendSystemMessage(Component.translatable("theology.earth_theology.temple.formed").withStyle(ChatFormatting.GOLD));
                     serverLevel.playSound(null, pos, EarthTheology.SOUND_TEMPLE_FORMED.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
+                    serverLevel.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.9F, 1.05F);
+                    serverLevel.playSound(null, pos, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    emitSacredParticles(serverLevel, pos, 18, 12, 16);
                 } else {
                     for (String code : fails) {
                         sp.sendSystemMessage(failMsg(code));
                     }
+                    serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 0.7F, 0.9F);
+                    emitSacredParticles(serverLevel, pos, 2, 0, 4);
                 }
+                sp.swing(InteractionHand.MAIN_HAND, true);
             }
             return InteractionResult.SUCCESS;
         }
@@ -787,10 +956,30 @@ public final class TheologyBlocks {
                     if (SanctumFieldSavedData.get(serverLevel).nearestAltar(pos, TheologyMath.ALTAR_REACH).isEmpty() && player instanceof ServerPlayer sp) {
                         sp.sendOverlayMessage(failMsg("no_altar"));
                     }
+                    player.swing(hand, true);
+                    serverLevel.playSound(null, pos, SoundEvents.BOTTLE_EMPTY, SoundSource.BLOCKS, 0.8F, 1.1F);
+                    serverLevel.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.6F, 1.25F);
+                    serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.7F, 1.2F);
+                    emitSacredParticles(serverLevel, pos, 8, 6, 8);
                 }
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.TRY_WITH_EMPTY_HAND;
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer sp
+                    && level.getBlockEntity(pos) instanceof TheologyBlockEntities.WardStoneBlockEntity wardBe) {
+                sp.sendOverlayMessage(Component.translatable("theology.earth_theology.ward.status",
+                        wardBe.water(), wardBe.active()
+                                ? Component.translatable("theology.earth_theology.ward.active")
+                                : Component.translatable("theology.earth_theology.ward.inactive")).withStyle(ChatFormatting.GOLD));
+                sp.swing(InteractionHand.MAIN_HAND, true);
+                serverLevel.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.65F, 1.15F);
+                emitSacredParticles(serverLevel, pos, 4, 2, 4);
+            }
+            return InteractionResult.SUCCESS;
         }
     }
 }

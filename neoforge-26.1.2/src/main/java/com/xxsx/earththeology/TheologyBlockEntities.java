@@ -9,9 +9,15 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -38,6 +44,9 @@ public final class TheologyBlockEntities {
         private int waterCooldown;
         private int exorcismCooldown;
         private int blessCooldown;
+        private boolean generatedSanctuary;
+        private boolean monastery;
+        private boolean residentsSpawned;
 
         public ShrineAltarBlockEntity(BlockPos pos, BlockState state) {
             super(EarthTheology.SHRINE_ALTAR_BE.get(), pos, state);
@@ -57,6 +66,17 @@ public final class TheologyBlockEntities {
                 be.blessCooldown--;
                 changed = true;
             }
+            if (level instanceof ServerLevel serverLevel && be.generatedSanctuary && serverLevel.getGameTime() % 20 == 0) {
+                SanctumFieldSavedData field = SanctumFieldSavedData.get(serverLevel);
+                if (field.getAltar(pos).isEmpty()) {
+                    field.tryRegisterAltar(serverLevel, pos, be.ownerUuid);
+                }
+                if (!be.residentsSpawned) {
+                    be.spawnSanctuaryClergy(serverLevel, pos);
+                    be.residentsSpawned = true;
+                    changed = true;
+                }
+            }
             if (level instanceof ServerLevel serverLevel && serverLevel.getGameTime() % TheologyMath.SANCTUM_REFRESH_TICKS == 0) {
                 SanctumFieldSavedData field = SanctumFieldSavedData.get(serverLevel);
                 field.getAltar(pos).ifPresent(record -> field.rescanAltar(serverLevel, record));
@@ -64,6 +84,41 @@ public final class TheologyBlockEntities {
             if (changed) {
                 be.setChanged();
             }
+        }
+
+        public void configureGeneratedSanctuary(boolean monastery) {
+            this.generatedSanctuary = true;
+            this.monastery = monastery;
+            this.residentsSpawned = false;
+            setChanged();
+        }
+
+        public boolean generatedSanctuary() {
+            return generatedSanctuary;
+        }
+
+        public boolean monastery() {
+            return monastery;
+        }
+
+        private void spawnSanctuaryClergy(ServerLevel level, BlockPos pos) {
+            spawnClergyMember(level, pos.offset(1, 0, 1), true, monastery ? 2 : 1);
+            if (monastery) {
+                spawnClergyMember(level, pos.offset(-1, 0, 1), false, 1);
+            }
+        }
+
+        private static void spawnClergyMember(ServerLevel level, BlockPos spot, boolean priest, int profLevel) {
+            Villager villager = EntityType.VILLAGER.create(level, EntitySpawnReason.STRUCTURE);
+            if (villager == null) {
+                return;
+            }
+            var prof = priest ? EarthTheology.PRIEST : EarthTheology.SCRIBE;
+            villager.setVillagerData(villager.getVillagerData().withProfession(prof).withLevel(profLevel));
+            villager.snapTo(spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, level.getRandom().nextFloat() * 360.0F, 0.0F);
+            villager.setPersistenceRequired();
+            villager.getOffers();
+            level.addFreshEntity(villager);
         }
 
         public UUID ownerUuid() {
@@ -103,12 +158,23 @@ public final class TheologyBlockEntities {
         }
 
         @Override
+        public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+            if (level instanceof ServerLevel serverLevel) {
+                SanctumFieldSavedData.get(serverLevel).removeAltar(pos);
+            }
+            super.preRemoveSideEffects(pos, oldState);
+        }
+
+        @Override
         protected void saveAdditional(ValueOutput output) {
             super.saveAdditional(output);
             output.storeNullable("owner_uuid", UUIDUtil.CODEC, ownerUuid);
             output.putInt("water_cooldown", waterCooldown);
             output.putInt("exorcism_cooldown", exorcismCooldown);
             output.putInt("bless_cooldown", blessCooldown);
+            output.putBoolean("generated_sanctuary", generatedSanctuary);
+            output.putBoolean("monastery", monastery);
+            output.putBoolean("residents_spawned", residentsSpawned);
         }
 
         @Override
@@ -118,6 +184,9 @@ public final class TheologyBlockEntities {
             waterCooldown = Math.max(0, Math.min(100, input.getIntOr("water_cooldown", 0)));
             exorcismCooldown = Math.max(0, Math.min(6000, input.getIntOr("exorcism_cooldown", 0)));
             blessCooldown = Math.max(0, Math.min(1200, input.getIntOr("bless_cooldown", 0)));
+            generatedSanctuary = input.getBooleanOr("generated_sanctuary", false);
+            monastery = input.getBooleanOr("monastery", false);
+            residentsSpawned = input.getBooleanOr("residents_spawned", false);
         }
     }
 
@@ -144,6 +213,15 @@ public final class TheologyBlockEntities {
                 }
                 SanctumFieldSavedData.get(serverLevel).rescanNearbyAltars(serverLevel, worldPosition);
             }
+        }
+
+        @Override
+        public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+            if (level != null && !scroll.isEmpty()) {
+                Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, scroll.copy());
+                scroll = ItemStack.EMPTY;
+            }
+            super.preRemoveSideEffects(pos, oldState);
         }
 
         @Override
@@ -208,6 +286,10 @@ public final class TheologyBlockEntities {
             altar.setBlessedUntil(Math.max(level.getGameTime() + 24000L, nextDayStart));
             field.rescanAltar(level, altar);
             setChanged();
+            level.playSound(null, worldPosition, EarthTheology.SOUND_ALTAR_OFFER.get(), SoundSource.BLOCKS, 0.9F, 1.0F);
+            level.playSound(null, worldPosition, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 0.7F, 1.2F);
+            TheologyBlocks.emitSacredParticles(level, worldPosition, 10, 8, 8);
+            TheologyBlocks.emitSacredParticles(level, altar.pos(), 8, 6, 6);
 
             if (ownerUuid != null && com.xxsx.earthlore.api.LoreApi.knows(ownerUuid, TheologyLoreIntegration.NODE_OFFERINGS)) {
                 var ownerPlayer = level.getServer().getPlayerList().getPlayer(ownerUuid);
@@ -350,6 +432,12 @@ public final class TheologyBlockEntities {
                 if (level instanceof ServerLevel serverLevel && serverLevel.getGameTime() % 10 == 0) {
                     serverLevel.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE,
                             pos.getX() + 0.5D, pos.getY() + 0.8D, pos.getZ() + 0.5D, 1, 0.05D, 0.05D, 0.05D, 0.01D);
+                    if (serverLevel.getGameTime() % 20 == 0) {
+                        TheologyBlocks.emitSacredParticles(serverLevel, pos, 1, 1, 1);
+                    }
+                    if (serverLevel.getGameTime() % 80 == 0) {
+                        serverLevel.playSound(null, pos, EarthTheology.SOUND_CENSER_BURN.get(), SoundSource.BLOCKS, 0.35F, 1.0F);
+                    }
                 }
                 be.setChanged();
             }
@@ -362,6 +450,11 @@ public final class TheologyBlockEntities {
 
         public int burnTicks() {
             return burnTicks;
+        }
+
+        public void setBurnTicks(int burnTicks) {
+            this.burnTicks = Math.max(0, Math.min(2400, burnTicks));
+            setChanged();
         }
 
         public ItemStack incenseStack() {
@@ -475,6 +568,15 @@ public final class TheologyBlockEntities {
         }
 
         @Override
+        public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+            if (level != null && !relic.isEmpty()) {
+                Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, relic.copy());
+                relic = ItemStack.EMPTY;
+            }
+            super.preRemoveSideEffects(pos, oldState);
+        }
+
+        @Override
         protected void saveAdditional(ValueOutput output) {
             super.saveAdditional(output);
             output.storeNullable("relic", ItemStack.CODEC, relic.isEmpty() ? null : relic);
@@ -514,6 +616,7 @@ public final class TheologyBlockEntities {
                 }
             }
             if (be.active && serverLevel.getGameTime() % 40 == 0) {
+                TheologyBlocks.emitSacredParticles(serverLevel, pos, 2, 1, 3);
                 SanctumFieldSavedData field = SanctumFieldSavedData.get(serverLevel);
                 field.nearestAltar(pos, TheologyMath.ALTAR_REACH).ifPresent(altar -> {
                     BlockPos center = altar.pos();
@@ -522,6 +625,7 @@ public final class TheologyBlockEntities {
                         if (entity.distanceToSqr(center.getX() + 0.5D, center.getY() + 0.5D, center.getZ() + 0.5D)
                                 <= TheologyMath.WARD_RADIUS * TheologyMath.WARD_RADIUS) {
                             entity.hurtServer(serverLevel, serverLevel.damageSources().magic(), 1.0F);
+                            TheologyBlocks.emitSacredParticles(serverLevel, entity.blockPosition(), 3, 1, 3);
                         }
                     }
                 });

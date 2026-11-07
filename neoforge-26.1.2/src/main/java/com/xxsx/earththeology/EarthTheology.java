@@ -32,6 +32,8 @@ import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -65,7 +67,15 @@ public final class EarthTheology {
     public static final DeferredRegister<VillagerProfession> PROFESSIONS =
             DeferredRegister.create(Registries.VILLAGER_PROFESSION, MODID);
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, MODID);
+    public static final DeferredRegister<Feature<?>> FEATURES = DeferredRegister.create(Registries.FEATURE, MODID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+
+    public static final DeferredHolder<Feature<?>, TheologySanctuaryFeature> WAYSIDE_SHRINE_FEATURE =
+            FEATURES.register("wayside_shrine", () -> new TheologySanctuaryFeature(
+                    NoneFeatureConfiguration.CODEC, TheologySanctuaryFeature.Kind.WAYSIDE_SHRINE));
+    public static final DeferredHolder<Feature<?>, TheologySanctuaryFeature> MONASTERY_SANCTUARY_FEATURE =
+            FEATURES.register("monastery_sanctuary", () -> new TheologySanctuaryFeature(
+                    NoneFeatureConfiguration.CODEC, TheologySanctuaryFeature.Kind.MONASTERY_SANCTUARY));
 
     // ---- Sounds (06 册 §5.1) ----
     public static final DeferredHolder<SoundEvent, SoundEvent> SOUND_BEADS_PRAY =
@@ -254,6 +264,7 @@ public final class EarthTheology {
                     .displayItems((params, output) -> {
                         output.accept(PRAYER_BEADS.get());
                         output.accept(BLANK_SCROLL.get());
+                        output.accept(TheologyItems.ScriptureScrollItem.create(TheologyLoreIntegration.NODE_PRAYER, "Priest"));
                         output.accept(INCENSE.get());
                         output.accept(HOLY_WATER.get());
                         output.accept(FEAST_CALENDAR.get());
@@ -284,6 +295,7 @@ public final class EarthTheology {
         MOB_EFFECTS.register(modBus);
         POI_TYPES.register(modBus);
         PROFESSIONS.register(modBus);
+        FEATURES.register(modBus);
         TABS.register(modBus);
         TheologyLoreIntegration.register(modBus);
         TheologyEvents.register();
