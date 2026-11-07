@@ -26,8 +26,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
@@ -37,6 +40,7 @@ import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -54,6 +58,42 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class TheologyItems {
     private TheologyItems() {
+    }
+
+    public static void treatEarthHumanInjuries(ServerPlayer player, double fractureRelief,
+                                               double bodyHeal, double lungAirRestore,
+                                               double fatigueReduction) {
+        try {
+            Class<?> bodyClass = Class.forName("com.xxsx.earthhuman.HumanBodyStatus");
+            Class<?> statusClass = Class.forName("com.xxsx.earthhuman.HumanStatus");
+            Class<?> netClass = Class.forName("com.xxsx.earthhuman.HumanNetwork");
+
+            java.lang.reflect.Method getBody = bodyClass.getMethod("get", Player.class);
+            Object body = getBody.invoke(null, player);
+            if (fractureRelief > 0.0D) {
+                java.lang.reflect.Method treatFracture = bodyClass.getMethod("treatFracture", ServerPlayer.class, double.class, double.class);
+                treatFracture.invoke(body, player, fractureRelief, bodyHeal);
+            } else if (bodyHeal > 0.0D) {
+                java.lang.reflect.Method healWorst = bodyClass.getMethod("healWorst", ServerPlayer.class, double.class, boolean.class);
+                healWorst.invoke(body, player, bodyHeal, true);
+            }
+            bodyClass.getMethod("applyFunctionalEffects", ServerPlayer.class).invoke(body, player);
+            bodyClass.getMethod("save", Player.class).invoke(body, player);
+            netClass.getMethod("syncBody", ServerPlayer.class, bodyClass).invoke(null, player, body);
+
+            Object status = statusClass.getMethod("get", Player.class).invoke(null, player);
+            if (lungAirRestore > 0.0D) {
+                double air = statusClass.getField("airQuality").getDouble(status);
+                statusClass.getField("airQuality").setDouble(status, Math.max(0.0D, Math.min(100.0D, air + lungAirRestore)));
+            }
+            if (fatigueReduction > 0.0D) {
+                double fat = statusClass.getField("fatigue").getDouble(status);
+                statusClass.getField("fatigue").setDouble(status, Math.max(0.0D, fat - fatigueReduction));
+            }
+            statusClass.getMethod("save", Player.class).invoke(status, player);
+            netClass.getMethod("sync", ServerPlayer.class, statusClass).invoke(null, player, status);
+        } catch (Throwable ignored) {
+        }
     }
 
     /** T-001 prayer_beads (modes: daily, healing, revelation, miracle). */
@@ -145,6 +185,31 @@ public final class TheologyItems {
         @Override
         public ItemUseAnimation getUseAnimation(ItemStack stack) {
             return ItemUseAnimation.BOW;
+        }
+
+        @Override
+        public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+            if (!(player.level() instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer sp)) {
+                return InteractionResult.SUCCESS;
+            }
+            if (player.getCooldowns().isOnCooldown(stack)) {
+                sp.sendOverlayMessage(TheologyBlocks.failMsg("cooldown"));
+                return InteractionResult.FAIL;
+            }
+            if (target instanceof Villager || target instanceof Player || (target instanceof TamableAnimal ta && ta.isTame())) {
+                target.heal(6.0F);
+                target.addEffect(new MobEffectInstance(EarthTheology.BLESSED, 1200, 0, false, true, true));
+                target.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 160, 0, false, true, true));
+                sp.addEffect(new MobEffectInstance(EarthTheology.SERENITY, 600, 0, false, true, true));
+                treatEarthHumanInjuries(sp, 0.35D, 2.0D, 20.0D, 8.0D);
+                PietyAttachment piety = sp.getData(EarthTheology.PIETY.get());
+                piety.addPiety(1);
+                sp.setData(EarthTheology.PIETY.get(), piety);
+                player.getCooldowns().addCooldown(stack, 120);
+                serverLevel.playSound(null, target.blockPosition(), EarthTheology.SOUND_ALTAR_BLESS.get(), SoundSource.PLAYERS, 0.8F, 1.15F);
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.PASS;
         }
 
         @Override
@@ -344,6 +409,7 @@ public final class TheologyItems {
             switch (mode) {
                 case DAILY -> {
                     player.addEffect(new MobEffectInstance(EarthTheology.SERENITY, 600, 0, false, true, true));
+                    treatEarthHumanInjuries(player, 0.35D, 2.5D, 25.0D, 10.0D);
                     if (nearAltar.isPresent()) {
                         PietyAttachment piety = player.getData(EarthTheology.PIETY.get());
                         long today = TheologyMath.gameDay(level.getDefaultClockTime());
@@ -377,6 +443,9 @@ public final class TheologyItems {
                     target.heal(amount);
                     target.removeEffect(MobEffects.POISON);
                     target.removeEffect(MobEffects.WITHER);
+                    if (target instanceof ServerPlayer spTarget) {
+                        treatEarthHumanInjuries(spTarget, 0.80D, 5.0D, 45.0D, 18.0D);
+                    }
                     player.getCooldowns().addCooldown(stack, 600);
                 }
                 case REVELATION -> {
@@ -623,6 +692,19 @@ public final class TheologyItems {
             if (!level.isClientSide()) {
                 entity.removeEffect(MobEffects.POISON);
                 entity.removeEffect(MobEffects.WITHER);
+                entity.heal(4.0F);
+                if (entity instanceof ServerPlayer sp) {
+                    treatEarthHumanInjuries(sp, 0.60D, 4.0D, 40.0D, 12.0D);
+                    if (level instanceof ServerLevel serverLevel) {
+                        SanctityComponent sanctity = stack.getOrDefault(EarthTheology.SANCTITY.get(), SanctityComponent.DEFAULT);
+                        float splashDmg = TheologyMath.computeHolyWaterSplashDamage(sanctity.grade());
+                        AABB box = sp.getBoundingBox().inflate(5.5D);
+                        for (LivingEntity undead : serverLevel.getEntitiesOfClass(LivingEntity.class, box, TheologyTags::isUndead)) {
+                            undead.hurtServer(serverLevel, serverLevel.damageSources().magic(), splashDmg);
+                            undead.igniteForTicks(80);
+                        }
+                    }
+                }
             }
             if (entity instanceof Player player && !player.getAbilities().instabuild) {
                 stack.shrink(1);
@@ -725,8 +807,36 @@ public final class TheologyItems {
 
     /** T-016 pilgrim_staff. */
     public static final class PilgrimStaffItem extends Item {
+        private static final Identifier STAFF_ATTACK_DAMAGE_ID = Identifier.withDefaultNamespace("base_attack_damage");
+        private static final Identifier STAFF_ATTACK_SPEED_ID = Identifier.withDefaultNamespace("base_attack_speed");
+
         public PilgrimStaffItem(Properties properties) {
-            super(properties);
+            super(properties.attributes(ItemAttributeModifiers.builder()
+                    .add(Attributes.ATTACK_DAMAGE,
+                            new AttributeModifier(STAFF_ATTACK_DAMAGE_ID, 6.5D, AttributeModifier.Operation.ADD_VALUE),
+                            EquipmentSlotGroup.MAINHAND)
+                    .add(Attributes.ATTACK_SPEED,
+                            new AttributeModifier(STAFF_ATTACK_SPEED_ID, -2.5D, AttributeModifier.Operation.ADD_VALUE),
+                            EquipmentSlotGroup.MAINHAND)
+                    .build()));
+        }
+
+        @Override
+        public void hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+            super.hurtEnemy(stack, target, attacker);
+            if (target.level() instanceof ServerLevel serverLevel) {
+                float bonus = TheologyTags.isUndead(target) ? 6.0F : 2.5F;
+                target.hurtServer(serverLevel, serverLevel.damageSources().magic(), bonus);
+                if (TheologyTags.isUndead(target)) {
+                    target.igniteForSeconds(4);
+                }
+                Vec3 knock = target.position().subtract(attacker.position());
+                if (knock.lengthSqr() > 0.001D) {
+                    Vec3 push = knock.normalize().scale(0.6D);
+                    target.push(push.x, 0.25D, push.z);
+                }
+                serverLevel.playSound(null, target.blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.PLAYERS, 0.7F, 1.25F);
+            }
         }
 
         public static Optional<BlockPos> getStartPos(ItemStack stack) {

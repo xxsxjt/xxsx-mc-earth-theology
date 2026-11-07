@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "earth_on_minecraft"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    "earth_on_minecraft:war_hammer",
+    "minecraft:gold_ingot",
+    "earth_theology:incense"
+  ],
+  "result": {
+    "id": "earth_theology:pilgrim_staff",
+    "count": 1
+  }
+}

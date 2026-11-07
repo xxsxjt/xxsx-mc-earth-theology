@@ -139,6 +139,21 @@ public final class TheologyEvents {
         if (victim instanceof ServerPlayer player && player.isUsingItem() && player.getUseItem().is(EarthTheology.PRAYER_BEADS.get())) {
             player.stopUsingItem();
         }
+        // Clergy (Priest / Scribe) divine smite counter-attack when attacked
+        if (victim instanceof Villager villager && victim.isAlive() && victim.level() instanceof ServerLevel vLevel) {
+            var prof = villager.getVillagerData().profession();
+            if (prof.is(EarthTheology.PRIEST.getId()) || prof.is(EarthTheology.SCRIBE.getId())) {
+                Entity src = event.getSource().getEntity();
+                if (src instanceof LivingEntity attacker && attacker != villager) {
+                    villager.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                            net.minecraft.world.effect.MobEffects.RESISTANCE, 80, 0, true, false, true));
+                    attacker.hurtServer(vLevel, vLevel.damageSources().magic(), 5.0F);
+                    attacker.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                            net.minecraft.world.effect.MobEffects.WEAKNESS, 100, 0, false, true, true));
+                    vLevel.playSound(null, villager.blockPosition(), EarthTheology.SOUND_ALTAR_EXORCISE.get(), SoundSource.NEUTRAL, 0.8F, 1.2F);
+                }
+            }
+        }
         // T-PIETY-01 rule 2: attacking villager or tamed animal at sanctum >= 1 reduces piety by 5
         if (event.getSource().getEntity() instanceof ServerPlayer attacker && attacker.level() instanceof ServerLevel serverLevel) {
             if (victim instanceof Villager || (victim instanceof TamableAnimal ta && ta.isTame())) {
@@ -162,6 +177,15 @@ public final class TheologyEvents {
         boolean protectedVictim = victim instanceof Villager || victim instanceof Player || (victim instanceof TamableAnimal ta && ta.isTame());
         if (killedByPlayerOrUndead && protectedVictim) {
             SanctumFieldSavedData.get(serverLevel).addDesecrationNearAltar(serverLevel, victim.blockPosition(), 10.0D);
+        }
+        if (victim instanceof Villager villager) {
+            var prof = villager.getVillagerData().profession();
+            if (prof.is(EarthTheology.PRIEST.getId())) {
+                villager.spawnAtLocation(serverLevel, new ItemStack(EarthTheology.INCENSE.get(), 2));
+                villager.spawnAtLocation(serverLevel, TheologyItems.HolyWaterItem.create(com.xxsx.earthlore.api.Grade.COMMON, 15));
+            } else if (prof.is(EarthTheology.SCRIBE.getId())) {
+                villager.spawnAtLocation(serverLevel, new ItemStack(EarthTheology.BLANK_SCROLL.get(), 2));
+            }
         }
     }
 
